@@ -6,7 +6,7 @@ VERSION = 0.1.0
 BIN = GinTonic
 
 CC = gcc
-CFLAGS = -Wall -g -shared
+CFLAGS = -Wall -g
 LFLAGS = -Wall -g -shared
 REL_CFLAGS = -Wall -O2 -mwindows
 
@@ -19,12 +19,19 @@ SRCS = $(wildcard $(SRC)/*.c)
 HDRS = $(wildcard $(INC)/*.h) 
 OBJS = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
 
+test: build
+	@echo -e '\n### Building & Running Test ###\n'
+	-rm main.o test.exe
+	${CC} ${CFLAGS} -o main.o -c main.c -L./ -lGinTonic $(addprefix -l,$(LIBS))
+	${CC} ${CFLAGS} -o test.exe main.o -L./ -lGinTonic $(addprefix -l,$(LIBS))
+	-./test.exe
+
 build: $(OBJS)
-	@echo '\n### Linking... ###'
-	${CC} ${CFLAGS} -o ${BIN}.dll $(OBJS) $(addprefix -l,$(LIBS))
+	@echo -e '\n### Linking... ###'
+	${CC} ${LFLAGS} -o ${BIN}.dll $(OBJS) $(addprefix -l,$(LIBS))
 
 release: 
-	@echo '### Creating Release... ###\n'
+	@echo -e '### Creating Release... ###\n'
 	${CC} ${REL_CFLAGS} -o ${BIN}_v${VERSION}.dll main.c src/* $(addprefix -l,${LIBS})
 
 clean:
@@ -37,4 +44,4 @@ $(OBJ)/%.o: $(SRC)/%.c $(INC)/%.h
 	@echo -e 'Building $@...'
 	@${CC} ${CFLAGS} -c $< -o $@
 
-.PHONY: run build release clean
+.PHONY: test run build release clean

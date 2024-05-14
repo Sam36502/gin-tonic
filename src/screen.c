@@ -27,13 +27,13 @@ void Screen_Init(const char *window_name, int screen_width, int screen_height) {
 
 	// Get Window Size
 	SDL_DisplayMode dmode;
-	float logical_aspect_ratio = screen_height / screen_width;
+	float logical_aspect_ratio = (float) screen_height / (float) screen_width;
 	int window_w, window_h;
 	if (SDL_GetCurrentDisplayMode(0, &dmode) == 0) {
-		window_w = (dmode.h/2);
-		window_h = (dmode.h/2)*logical_aspect_ratio;
+		window_w = (dmode.w/2);
+		window_h = (dmode.w/2)*logical_aspect_ratio;
 	} else {
-		Log_SDLMessage(LOG_ERROR, "Failed to retrieve current display mode");
+		Log_SDLMessage(LOG_WARNING, "Failed to retrieve current display mode");
 		window_w = 650;
 		window_h = 480;
 	}
@@ -41,8 +41,8 @@ void Screen_Init(const char *window_name, int screen_width, int screen_height) {
 	// Create Window
 	g_window = SDL_CreateWindow(
 		window_name,
-		window_w, window_h,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		window_w, window_h,
 		SDL_WINDOW_SHOWN
 		| SDL_WINDOW_RESIZABLE
 	);
@@ -56,8 +56,19 @@ void Screen_Init(const char *window_name, int screen_width, int screen_height) {
 		Log_SDLMessage(LOG_ERROR, "Failed to set renderer's logical size");
 	if (SDL_RenderSetIntegerScale(g_renderer, true) != 0)
 		Log_SDLMessage(LOG_ERROR, "Failed to set renderer to integer scaling");
+
+	g_screen_width = screen_width;
+	g_screen_height = screen_height;
 }
 
-void Screen_Clear() {
+void Screen_Term() {
+	SDL_DestroyRenderer(g_renderer);
+	g_renderer = NULL;
+	SDL_DestroyWindow(g_window);
+	g_window = NULL;
+}
 
+SDL_Colour Screen_ParseColour(char *hex_str) {
+	Log_Message(LOG_WARNING, "Sorry, Colour Parsing is not yet implemented");
+	return COLOUR_BLACK;
 }

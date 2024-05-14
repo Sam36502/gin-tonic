@@ -3,7 +3,9 @@
 Spritesheet *__load_texture(const char *img_file) {
 	SDL_Surface *surf = SDL_LoadBMP(img_file);
 	if (surf == NULL) {
-		Log_Message(LOG_ERROR, "Failed to load spritesheet");
+		char buf[256];
+		SDL_snprintf(buf, 256, "Failed to load grid spritesheet '%s'", img_file);
+		Log_Message(LOG_ERROR, buf);
 		return NULL;
 	}
 
@@ -23,6 +25,8 @@ Spritesheet *Sprite_LoadSheet(const char *img_file, const char *prt_file) {
 //
 Spritesheet *Sprite_LoadSheetGrid(const char *img_file, int sprite_width, int sprite_height) {
 	Spritesheet *sheet = __load_texture(img_file);
+	if (sheet == NULL) return NULL;
+
 	int full_width, full_height;
 	SDL_QueryTexture(sheet->texture, NULL, NULL, &full_width, &full_height);
 	sheet->width = full_width/sprite_width;
@@ -30,8 +34,10 @@ Spritesheet *Sprite_LoadSheetGrid(const char *img_file, int sprite_width, int sp
 	int num_sprites = sheet->width * sheet->height;
 
 	sheet->spritelist = SDL_malloc(sizeof(Sprite) * num_sprites);
+	size_t filename_len = SDL_strlen(img_file) + 1;
+	sheet->filename = SDL_malloc(sizeof(char) * filename_len);
+	SDL_memcpy(sheet->filename, img_file, filename_len);
 	SpriteID sprite_id = 0;
-	//puts("Loading Sprites...");
 	for (int y=0; y<sheet->height; y++) {
 		for (int x=0; x<sheet->width; x++) {
 			Sprite sprite = SDL_malloc(sizeof(Sprite));
@@ -40,7 +46,6 @@ Spritesheet *Sprite_LoadSheetGrid(const char *img_file, int sprite_width, int sp
 			sprite->w = sprite_width;
 			sprite->h = sprite_height;
 			sheet->spritelist[sprite_id] = sprite;
-			//printf("  [0x%04X] Sprite { % 3i, % 3i, % 3i, % 3i }\n", sprite_id, sprite->x, sprite->y, sprite->w, sprite->h);
 			sprite_id++;
 		}
 	}
@@ -59,6 +64,13 @@ void Sprite_FreeSheet(Spritesheet *sheet) {
 }
 
 void Sprite_Draw(Spritesheet *sheet, int x, int y, SpriteID id) {
+	if (sheet == NULL) {
+		char buf[256];
+		SDL_snprintf(buf, 256, "Tried to draw sprite 0x%04X from null spritesheet to (%i/%i)", id, x, y);
+		Log_Message(LOG_ERROR, buf);
+		return;
+	}
+
 	if (id < 0 || id >= SPRITE_COUNT(sheet)) return;
 	SDL_RenderCopyEx(g_renderer,
 		sheet->texture,

@@ -8,17 +8,23 @@
 //	
 
 #include <SDL2/SDL.h>
-#include "../include/log.h"
+#include "log.h"
 
 //	
-//		Constant Definitions
+//		Constants/Macro Definitions
 //	
+
+// Define some common colours
+#define COLOUR_WHITE (struct SDL_Colour){ 0xFF, 0xFF, 0xFF, 0xFF }
+#define COLOUR_BLACK (struct SDL_Colour){ 0x00, 0x00, 0x00, 0xFF }
+
+#define CLR_TO_RGBA(clr) clr.r, clr.g, clr.b, clr.a
+
 
 
 //	
 //		Type Definitions
 //	
-
 
 //	
 //		Global Variable Declarations
@@ -35,7 +41,8 @@ extern int g_screen_height;
 //	
 
 void Screen_Init(const char *window_name, int screen_width, int screen_height);
-void Util_ClearScreen();
+void Screen_Term();
+SDL_Colour Screen_ParseColour(char *hex_str);
 
 
 #endif

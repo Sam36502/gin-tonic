@@ -8,10 +8,10 @@
 //		(Hierarchy-Level: Bottom)
 //	
 
-#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <SDL2/SDL.h>
 //#include <stdarg.h> // Needed if making message with variables
 
 
@@ -30,8 +30,8 @@
 
 // Log Level Text
 #define LOGLVL_TEXT_DEBUG	"DEBUG"
-#define LOGLVL_TEXT_INFO	"INFO"
-#define LOGLVL_TEXT_WARNING	"WARN"
+#define LOGLVL_TEXT_INFO	"INFO "
+#define LOGLVL_TEXT_WARNING	"WARN "
 #define LOGLVL_TEXT_ERROR	"ERROR"
 #define LOGLVL_TEXT_FATAL	"FATAL"
 
@@ -43,12 +43,12 @@
 //		Type Definitions
 //	
 
-typedef enum {
-	LOG_DEBUG,
-	LOG_INFO,
-	LOG_WARNING,
-	LOG_ERROR,
-	LOG_FATAL
+typedef enum {		// Usage guide:
+	LOG_DEBUG,		// Info only for helping find bugs
+	LOG_INFO,		// Info that could be useful to any user
+	LOG_WARNING,	// Something went wrong, but it shouldn't impact the system
+	LOG_ERROR,		// Something went wrong, and will have a negative impact, but it shouldn't crash the system
+	LOG_FATAL		// System cannot continue, automatically exits
 } Log_Level;
 
 
@@ -61,6 +61,8 @@ typedef enum {
 //		Function Declarations
 //	
 
+void Log_SetPrintLevel(Log_Level lvl);
+void Log_SetPopupLevel(Log_Level lvl);
 void Log_MessageFull(SDL_Window *window, Log_Level lvl, const char *msg, bool is_sdl_error);
 
 #endif
