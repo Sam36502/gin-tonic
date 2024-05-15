@@ -22,6 +22,9 @@ static Uint32 __cb_clock(Uint32 interval, void *param) {
 	};
 	SDL_PushEvent((SDL_Event *) &event);
 
+	// Handle all internal things that need to be called every frame
+
+
 	if (g_isRunning) return interval;
 	else return 0;
 }
@@ -39,9 +42,17 @@ void Events_Init(Uint32 ms_per_tick) {
 	SDL_AddTimer(ms_per_tick, __cb_clock, NULL);
 }
 
-void Events_HandleInternal(SDL_Event *event) {
-	switch (event->type) {
+void Events_HandleInternal(SDL_Event event) {
+	switch (event.type) {
 
+		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP: {
+			Button_HandleMouseButtonEvent(event.button);
+		} break;
 
+		case SDL_MOUSEMOTION: {
+			Button_HandleMouseMotionEvent(event.motion);
+		} break;
+		
 	}
 }

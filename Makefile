@@ -6,6 +6,7 @@ VERSION = 0.1.0
 BIN = GinTonic
 
 CC = gcc
+LD = ld
 CFLAGS = -Wall -g
 LFLAGS = -Wall -g -shared
 REL_CFLAGS = -Wall -O2 -mwindows
@@ -15,9 +16,15 @@ LIBS = mingw32 SDL2main SDL2_net SDL2
 SRC = src
 INC = include
 OBJ = objects
+EMB = embeds
 SRCS = $(wildcard $(SRC)/*.c) 
 HDRS = $(wildcard $(INC)/*.h) 
-OBJS = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS))
+EMBS = $(wildcard $(EMB)/*)
+OBJS = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS)) $(patsubst $(EMB)/%,$(OBJ)/%.o,$(EMBS))
+
+list:
+	@echo -e '\n### Objects to Build: ###'
+	@echo $(OBJS)
 
 test: build
 	@echo -e '\n### Building & Running Test ###\n'
@@ -43,5 +50,9 @@ clean:
 $(OBJ)/%.o: $(SRC)/%.c $(INC)/%.h
 	@echo -e 'Building $@...'
 	@${CC} ${CFLAGS} -c $< -o $@
+
+$(OBJ)/%.o: $(EMB)/%
+	@echo -e 'Embedding $@...'
+	@${LD} -r -b binary $< -o $@
 
 .PHONY: test run build release clean

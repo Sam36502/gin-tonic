@@ -49,6 +49,12 @@ Spritesheet *Sprite_LoadSheet(const char *img_file, const char *prt_file);
 //	You must also call `Sprite_FreeSheet()` when you are finished with it to avoid a memory leak
 Spritesheet *Sprite_LoadSheetGrid(const char *img_file, int sprite_width, int sprite_height);
 
+//	Loads a spritesheet from an `SDL_Surface`
+//	
+//	Intended for internal use.
+//	Functions Identically to `LoadSheetGrid()` otherwise
+Spritesheet *Sprite_LoadSheetGridFromSurface(SDL_Surface *surf, int sprite_width, int sprite_height);
+
 //	Frees a previously created spritesheet
 //	
 void Sprite_FreeSheet(Spritesheet *sheet);

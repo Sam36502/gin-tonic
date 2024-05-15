@@ -4,9 +4,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define GT_ENVIRONMENT_DEV
 #include "include/log.h"
 #include "include/screen.h"
+#include "include/text.h"
+#include "include/events.h"
+#include "include/button.h"
+
+void say_hello(void *_) {
+	Log_Message(LOG_INFO, "Hello, button!");
+}
 
 int main(int argc, char* args[]) {
 	// Set Logging to Develop Mode
@@ -18,7 +24,21 @@ int main(int argc, char* args[]) {
 	Log_Message(LOG_DEBUG, "Hello, world!");
 	Log_Message(LOG_INFO, "Hello, world!");
 
-	Screen_Init("GinTonic Test Program", 1000, 128);
+	Screen_Init("GinTonic Test Program", 128, 128);
+	Text_Init("assets/text_sprites.bmp");
+
+	int bid = Button_Create(
+		(struct SDL_Rect){
+			50, 50,
+			50, 50
+		},
+		false,
+		&say_hello,
+		NULL, NULL,
+		(SDL_Colour){ 0x40, 0x00, 0x00, 0xFF },
+		(SDL_Colour){ 0x80, 0x00, 0x00, 0xFF },
+		(SDL_Colour){ 0xFF, 0x00, 0x00, 0xFF }
+	);
 
 	// Main Loop
 	bool isRunning = true;
@@ -30,6 +50,8 @@ int main(int argc, char* args[]) {
 		int scode = SDL_WaitEvent(&curr_event);
 
 		if (scode != 0) {
+			Events_HandleInternal(curr_event);
+
 			switch (curr_event.type) {
 				case SDL_QUIT:
 					isRunning = false;
@@ -63,21 +85,20 @@ int main(int argc, char* args[]) {
 		}
 
 		if (redraw) {
-			SDL_SetRenderDrawColor(g_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+			SDL_SetRenderDrawColor(g_renderer, 0x00, 0x00, 0x00, 0xFF);
 			SDL_RenderClear(g_renderer);
 
-			SDL_SetRenderDrawColor(g_renderer, 0xFF, 0x00, 0x00, 0xFF);
-			SDL_RenderFillRect(g_renderer, &(struct SDL_Rect){
-				50, 50,
-				50, 50
-			});
+			Text_Draw("Hello, world!", 13, 10, 10);
+			Text_Draw("Sphinx of black quartz, judge my vow!", 37, 10, 20);
 
+			Button_DrawAll();
 			SDL_RenderPresent(g_renderer);
 		}
 
 	}
 
 	// Termination
+	Button_Term();
 	SDL_DestroyRenderer(g_renderer);
 	SDL_DestroyWindow(g_window);
 	SDL_Quit();

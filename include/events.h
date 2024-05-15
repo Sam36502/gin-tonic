@@ -14,6 +14,7 @@
 #include <SDL2/SDL_events.h>
 #include "util.h"
 #include "log.h"
+#include "button.h"
 
 
 //	
@@ -37,7 +38,7 @@ void Events_Init(Uint32 ms_per_tick);
 //	
 //	This function should be called before you check any
 //	received events yourself if you use any of GinTonic's
-//	input utilities
-void Events_HandleInternal(SDL_Event *event);
+//	input utilities (<button.h>)
+void Events_HandleInternal(SDL_Event event);
 
 #endif
