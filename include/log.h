@@ -19,14 +19,7 @@
 //		Constant Definitions
 //	
 
-// Define Output Thresholds
-#if defined(GT_ENVIRONMENT_DEV)
-	#define LOG_PRINT_LEVEL LOG_DEBUG
-	#define LOG_POPUP_LEVEL LOG_INFO
-#else
-	#define LOG_PRINT_LEVEL LOG_WARNING
-	#define LOG_POPUP_LEVEL LOG_ERROR
-#endif
+#define LOG_MSG_MAX_LEN 0x400
 
 // Log Level Text
 #define LOGLVL_TEXT_DEBUG	"DEBUG"

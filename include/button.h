@@ -26,8 +26,9 @@
 
 typedef struct Button {
 	SDL_Rect rect;
-	void (* callback_on)(void *udata);
-	void (* callback_off)(void *udata);
+	void (* callback_on)(int ID, void *udata);
+	void (* callback_off)(int ID, void *udata);
+	int id;
 	void *udata;
 	bool is_toggle;	// Whether this switch should act like a toggle
 	bool is_on;
@@ -61,8 +62,8 @@ void Button_Term();
 int Button_Create(
 	SDL_Rect rect,
 	bool is_toggleable,
-	void (* callback_on)(void *udata),
-	void (* callback_off)(void *udata),
+	void (* callback_on)(int ID, void *udata),
+	void (* callback_off)(int ID, void *udata),
 	void *udata,
 	SDL_Colour clr_off, SDL_Colour clr_hover, SDL_Colour clr_on 
 );

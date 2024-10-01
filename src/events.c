@@ -44,14 +44,17 @@ void Events_Init(Uint32 ms_per_tick) {
 
 void Events_HandleInternal(SDL_Event event) {
 	switch (event.type) {
+		case SDL_QUIT: g_isRunning = false; return;
 
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP: {
 			Button_HandleMouseButtonEvent(event.button);
+			Slider_HandleMouseButtonEvent(event.button);
 		} break;
 
 		case SDL_MOUSEMOTION: {
 			Button_HandleMouseMotionEvent(event.motion);
+			Slider_HandleMouseMotionEvent(event.motion);
 		} break;
 		
 	}

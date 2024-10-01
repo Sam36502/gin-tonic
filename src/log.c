@@ -68,14 +68,14 @@ void Log_MessageFull(SDL_Window *window, Log_Level lvl, const char *msg, bool is
 
 	// Show message in pop-up box
 	if (lvl >= _g_popup_level) {
-		char full_msg[0x400];
+		char full_msg[LOG_MSG_MAX_LEN];
 	
 		if (is_sdl_error) {
 			char sdl_err_msg[256];
 			SDL_GetErrorMsg(sdl_err_msg, 256);
-			SDL_snprintf(full_msg, 0x400, "[%s] %s:\n    %s\n", lvl_str, msg, sdl_err_msg);
+			SDL_snprintf(full_msg, LOG_MSG_MAX_LEN, "%s:\n%s\n", msg, sdl_err_msg);
 		} else {
-			SDL_snprintf(full_msg, 0x400, "[%s] %s\n", lvl_str, msg);
+			SDL_snprintf(full_msg, LOG_MSG_MAX_LEN, "%s\n", msg);
 		}
 
 		SDL_ShowSimpleMessageBox(

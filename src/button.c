@@ -9,13 +9,14 @@ void Button_Term() {
 		Button *b = __buttons[i];
 		free(b);
 	}
+	__buttoncount = 0;
 }
 
 int Button_Create(
 	SDL_Rect rect,
 	bool is_toggleable,
-	void (* callback_on)(void *udata),
-	void (* callback_off)(void *udata),
+	void (* callback_on)(int ID, void *udata),
+	void (* callback_off)(int ID, void *udata),
 	void *udata,
 	SDL_Colour clr_off, SDL_Colour clr_hover, SDL_Colour clr_on 
 ) {
@@ -23,6 +24,7 @@ int Button_Create(
 	b->rect = rect;
 	b->callback_on = callback_on;
 	b->callback_off = callback_off;
+	b->id = __buttoncount;
 	b->udata = udata;
 	b->is_toggle = is_toggleable;
     b->clr_off = clr_off;
@@ -33,7 +35,8 @@ int Button_Create(
 	b->hovering = false;
 
 	__buttons[__buttoncount] = b;
-	return __buttoncount++;
+	__buttoncount++;
+	return b->id;
 }
 
 void Button_DrawAll() {
@@ -88,20 +91,20 @@ void Button_HandleMouseButtonEvent(SDL_MouseButtonEvent event) {
 					b->is_on = !b->is_on;
 
 					if(b->is_on) {
-						if (b->callback_on != NULL) (*b->callback_on)(b->udata);
+						if (b->callback_on != NULL) (*b->callback_on)(b->id, b->udata);
 					} else {
-						if (b->callback_off != NULL) (*b->callback_off)(b->udata);
+						if (b->callback_off != NULL) (*b->callback_off)(b->id, b->udata);
 					}
 				} else {
 					b->is_on = true;
-					if (b->callback_on != NULL) (*b->callback_on)(b->udata);
+					if (b->callback_on != NULL) (*b->callback_on)(b->id, b->udata);
 				}
 			
 			// Mouse button lifted on button
 			} else {
 				if (!b->is_toggle && b->is_on) {
 					b->is_on = false;
-					if (b->callback_off != NULL) (*b->callback_off)(b->udata);
+					if (b->callback_off != NULL) (*b->callback_off)(b->id, b->udata);
 				}
 			}
 		}
@@ -120,13 +123,13 @@ void Button_HandleMouseMotionEvent(SDL_MouseMotionEvent event) {
 			) {
 				b->hovering = true;
 				if (!b->is_on && !b->is_toggle && mouse_held) {
-					if (b->callback_on != NULL) (*b->callback_on)(b->udata);
+					if (b->callback_on != NULL) (*b->callback_on)(b->id, b->udata);
 					b->is_on = true;
 				}
 			} else {
 				b->hovering = false;
 				if (b->is_on && !b->is_toggle) {
-					if (b->callback_off != NULL) (*b->callback_off)(b->udata);
+					if (b->callback_off != NULL) (*b->callback_off)(b->id, b->udata);
 					b->is_on = false;
 				}
 			}

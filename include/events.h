@@ -15,6 +15,7 @@
 #include "util.h"
 #include "log.h"
 #include "button.h"
+#include "slider.h"
 
 
 //	

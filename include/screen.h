@@ -18,6 +18,7 @@
 #define COLOUR_WHITE (struct SDL_Colour){ 0xFF, 0xFF, 0xFF, 0xFF }
 #define COLOUR_BLACK (struct SDL_Colour){ 0x00, 0x00, 0x00, 0xFF }
 
+#define CLR_TO_RGB(clr) clr.r, clr.g, clr.b
 #define CLR_TO_RGBA(clr) clr.r, clr.g, clr.b, clr.a
 
 

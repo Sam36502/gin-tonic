@@ -27,14 +27,21 @@ void Screen_Init(const char *window_name, int screen_width, int screen_height) {
 
 	// Get Window Size
 	SDL_DisplayMode dmode;
-	float logical_aspect_ratio = (float) screen_height / (float) screen_width;
 	int window_w, window_h;
 	if (SDL_GetCurrentDisplayMode(0, &dmode) == 0) {
-		window_w = (dmode.w/2);
-		window_h = (dmode.w/2)*logical_aspect_ratio;
+		
+		// Set screen to largest multiple that fits the screen
+		int scale = 1;
+		while (screen_width * scale < dmode.w
+			&& screen_height * scale < dmode.h
+		) { scale++; }
+		scale--;
+		window_w = screen_width * scale;
+		window_h = screen_height * scale;
+
 	} else {
-		Log_SDLMessage(LOG_WARNING, "Failed to retrieve current display mode");
-		window_w = 650;
+		Log_SDLMessage(LOG_WARNING, "Failed to retrieve current display dimensions; Defaulting window to 640x480.");
+		window_w = 640;
 		window_h = 480;
 	}
 
