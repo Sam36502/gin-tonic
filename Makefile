@@ -17,6 +17,7 @@ SRC = src
 INC = include
 OBJ = objects
 EMB = embeds
+TST = test
 SRCS = $(wildcard $(SRC)/*.c) 
 HDRS = $(wildcard $(INC)/*.h) 
 EMBS = $(wildcard $(EMB)/*)
@@ -24,13 +25,13 @@ OBJS = $(patsubst $(SRC)/%.c,$(OBJ)/%.o,$(SRCS)) $(patsubst $(EMB)/%,$(OBJ)/%.o,
 
 list:
 	@echo -e '\n### Objects to Build: ###'
-	@echo $(OBJS)
+	@printf '%s\n' $(notdir $(OBJS))
 
 test: build
 	@echo -e '\n### Building & Running Test ###\n'
-	-rm main.o test.exe
-	${CC} ${CFLAGS} -o main.o -c main.c -L./ -lGinTonic $(addprefix -l,$(LIBS))
-	${CC} ${CFLAGS} -o test.exe main.o -L./ -lGinTonic $(addprefix -l,$(LIBS))
+	-rm -f $(TST)/main.o $(TST)/test.exe
+	${CC} ${CFLAGS} -o $(TST)/main.o -c $(TST)/main.c -L./ -lGinTonic $(addprefix -l,$(LIBS))
+	${CC} ${CFLAGS} -o $(TST)/test.exe $(TST)/main.o -L./ -lGinTonic $(addprefix -l,$(LIBS))
 
 build: $(OBJS)
 	@echo -e '\n### Linking... ###'
@@ -42,9 +43,9 @@ release:
 
 clean:
 	@echo -e '### Cleaning... ###\n'
-	-rm $(BIN).dll
-	-rm -r $(OBJ)
-	mkdir -p $(OBJ)
+	-rm -f $(BIN).dll
+	-rm -rf $(OBJ)
+	@mkdir -p $(OBJ)
 
 $(OBJ)/%.o: $(SRC)/%.c $(INC)/%.h
 	@echo -e 'Building $@...'
@@ -53,5 +54,9 @@ $(OBJ)/%.o: $(SRC)/%.c $(INC)/%.h
 $(OBJ)/%.o: $(EMB)/%
 	@echo -e 'Embedding $@...'
 	@${LD} -r -b binary $< -o $@
+
+$(OBJ):
+	#echo -e 'Creating object directory...'
+	@mkdir -p $(OBJ)
 
 .PHONY: test run build release clean
