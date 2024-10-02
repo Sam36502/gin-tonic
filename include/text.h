@@ -51,9 +51,9 @@ typedef struct {
 //		Embedded Data & Global Variable Declarations
 //	
 
-// Embedded Bitmap (Not used)
-//extern const Uint8 _binary_embeds_text_sprites_start[];
-//extern const Uint8 _binary_embeds_text_sprites_end[];
+// Embedded Bitmap
+extern const Uint8 _binary_embeds_text_sprites_start[];
+extern const Uint8 _binary_embeds_text_sprites_end[];
 
 extern Spritesheet *g_text_spsh;
 
@@ -61,6 +61,7 @@ extern Spritesheet *g_text_spsh;
 //	Initialise Text Utilities
 //	
 //	Initialises the text spritesheet from embedded image
+//	Pass NULL pointer to load default embedded text spritesheet
 void Text_Init(char *text_bitmap_file);
 
 //	Terminate Text Utilities

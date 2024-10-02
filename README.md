@@ -1,6 +1,6 @@
 # Gin-Tonic
 
-Collection of my own utility code using SDL2 for making games.
+Collection of my own utility code for making games with SDL2
 
 ## Features
  - General SDL Utils, such as for error-messages
@@ -9,6 +9,9 @@ Collection of my own utility code using SDL2 for making games.
  - ~~Text-Box Queues~~
  - ~~Simple 8-Bit-Style audio generation tools~~
 
-## Usage
-
-Documentation can be found (at my website)[www.pearcenet.ch/gin-tonic/docs]
+## Future Improvements
+ - Embed interface: Lets you embed a datablock file and fetch
+   data from it easily (`embed.h`)
+ - Network interface: Provides basic net utilities for hosting
+   and connecting to servers. Maybe also net-event infrastructure
+   (`network.h`)

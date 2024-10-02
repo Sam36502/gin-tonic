@@ -3,33 +3,37 @@
 
 Spritesheet *g_text_spsh;
 
-//static SDL_Surface *__getEmbeddedSurface() {
-//
-//	Uint8 *data = (Uint8 *) _binary_embeds_text_sprites_start;
-//	int width = *(int *)(data); data += sizeof(int);
-//	int height = *(int *)(data); data += sizeof(int);
-//	int depth = *(int *)(data); data += sizeof(int);
-//	int pitch = *(int *)(data); data += sizeof(int);
-//
-//	Uint32 Rmask = *(Uint32 *)(data); data += sizeof(Uint32);
-//	Uint32 Gmask = *(Uint32 *)(data); data += sizeof(Uint32);
-//	Uint32 Bmask = *(Uint32 *)(data); data += sizeof(Uint32);
-//	Uint32 Amask = *(Uint32 *)(data); data += sizeof(Uint32);
-//
-//	SDL_Surface *surf = SDL_CreateRGBSurfaceFrom(
-//		data,
-//		width, height, depth, pitch,
-//		Rmask, Gmask, Bmask, Amask
-//	);
-//	if (surf == NULL) Log_SDLMessage(LOG_ERROR, "Failed to read embedded surface data");
-//	return surf;
-//}
+static SDL_Surface *__getEmbeddedSurface() {
+
+	Uint8 *data = (Uint8 *) _binary_embeds_text_sprites_start;
+	int width = *(int *)(data); data += sizeof(int);
+	int height = *(int *)(data); data += sizeof(int);
+
+	// Generate greyscale surface & palette
+	SDL_Surface *surf = SDL_CreateRGBSurfaceWithFormat(0, width, height, 8, SDL_PIXELFORMAT_INDEX8);
+	if (surf == NULL) Log_SDLMessage(LOG_FATAL, "Failed to create greyscale surface");
+	SDL_Colour clrs[0x100];
+	for (int i=0; i<0x100; i++) clrs[i] = (SDL_Colour){ i, i, i, 0xFF };
+	SDL_SetPaletteColors(surf->format->palette, clrs, 0, 0x100);
+
+	// Load embedded pixel data
+	SDL_memcpy(surf->pixels, data, _binary_embeds_text_sprites_end - data);
+
+	return surf;
+}
 
 
 void Text_Init(char *text_bitmap_file) {
-	g_text_spsh = Sprite_LoadSheetGrid(text_bitmap_file, TEXT_SPRITE_WIDTH, TEXT_SPRITE_HEIGHT);
+	if (text_bitmap_file == NULL) {
+		SDL_Surface *surf_emb = __getEmbeddedSurface();
+		g_text_spsh = Sprite_LoadSheetGridFromSurface(surf_emb, TEXT_SPRITE_WIDTH, TEXT_SPRITE_HEIGHT);
+		SDL_FreeSurface(surf_emb);
+	} else {
+		g_text_spsh = Sprite_LoadSheetGrid(text_bitmap_file, TEXT_SPRITE_WIDTH, TEXT_SPRITE_HEIGHT);
+	}
+
 	if (g_text_spsh == NULL) {
-		Log_Message(LOG_FATAL, "Failed to load embedded text spritesheet");
+		Log_Message(LOG_FATAL, "Failed to load text spritesheet");
 	}
 }
 

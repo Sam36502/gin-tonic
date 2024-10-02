@@ -61,10 +61,11 @@ int main(int argc, char* args[]) {
 
 	Screen_Init("GinTonic Test Program", 128, 128);
 	Sprite_Init();
-	Text_Init("assets/text_sprites.png");
+	//Text_Init("../assets/text_sprites.png");
+	Text_Init(NULL);
 	Events_Init(50);
 
-	g_spsh_wave_btns = Sprite_LoadSheetGrid("assets/wave_buttons.png", 16, 16);
+	//g_spsh_wave_btns = Sprite_LoadSheetGrid("../assets/wave_buttons.png", 16, 16);
 
 	Music_Init(16);
 	g_music = Music_File_Open("bemused/music/test_music.dbf");
@@ -156,6 +157,7 @@ int main(int argc, char* args[]) {
 	Scene_Register(scn_test, "test");
 	Scene_Set("menu");
 	Scene_Execute();
+	return 0;
 
 	// Main Loop
 	bool isRunning = true;
