@@ -10,14 +10,20 @@ static SDL_Surface *__getEmbeddedSurface() {
 	int height = *(int *)(data); data += sizeof(int);
 
 	// Generate greyscale surface & palette
-	SDL_Surface *surf = SDL_CreateRGBSurfaceWithFormat(0, width, height, 8, SDL_PIXELFORMAT_INDEX8);
-	if (surf == NULL) Log_SDLMessage(LOG_FATAL, "Failed to create greyscale surface");
-	SDL_Colour clrs[0x100];
-	for (int i=0; i<0x100; i++) clrs[i] = (SDL_Colour){ i, i, i, 0xFF };
-	SDL_SetPaletteColors(surf->format->palette, clrs, 0, 0x100);
+	SDL_Surface *surf = SDL_CreateRGBSurfaceWithFormat(0, width, height, 8, SDL_PIXELFORMAT_RGBA32);
+	if (surf == NULL) Log_SDLMessage(LOG_FATAL, "Failed to create blank surface while loading embedded surface");
 
-	// Load embedded pixel data
-	SDL_memcpy(surf->pixels, data, _binary_embeds_text_sprites_end - data);
+	// Manually copy embedded surface data
+	// Format is single byte corresponding to greyscale (with alpha)
+	// i.e.: 0x37 => #373737 (0x37 alpha)
+	Uint32 *surf_data = (Uint32 *) surf->pixels;
+	for (int i=0; i<_binary_embeds_text_sprites_end - data; i++) {
+		Uint32 pixel = data[i]
+			| data[i] << 8
+			| data[i] << 16
+			| data[i] << 24;
+		surf_data[i] = pixel;
+	}
 
 	return surf;
 }

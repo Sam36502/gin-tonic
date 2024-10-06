@@ -153,11 +153,11 @@ int main(int argc, char* args[]) {
 		"\n\x83",
 	68, 10, 10);
 
-	Scene_Register(scn_menu, "menu");
-	Scene_Register(scn_test, "test");
-	Scene_Set("menu");
-	Scene_Execute();
-	return 0;
+	//Scene_Register(scn_menu, "menu");
+	//Scene_Register(scn_test, "test");
+	//Scene_Set("menu");
+	//Scene_Execute();
+	//return 0;
 
 	// Main Loop
 	bool isRunning = true;
@@ -219,22 +219,22 @@ int main(int argc, char* args[]) {
 			SDL_SetRenderDrawColor(g_renderer, 0x00, 0x20, 0x80, 0xFF);
 			SDL_RenderClear(g_renderer);
 
-			//Text_Draw("A sphinx's black quartz for judging my vowel!", 37, 10, 20);
+			Text_Draw("A sphinx's black quartz for judging my vowel!", 37, 10, 20);
 			//Text_PrintEncoding(4, 4);
 			
 			//if (is_green) Text_SetColour(GREEN);
-			Text_Box_Draw(txt, 5, 5);
+			//Text_Box_Draw(txt, 5, 5);
 			//if (is_green) Text_ResetColour();
-			SDL_SetRenderDrawColor(g_renderer, 0xFF, 0x40, 0x20, 0xFF);
-			SDL_RenderDrawRect(g_renderer, &(struct SDL_Rect){
-				30, 30, 16, 16,
-			});
-			Sprite_DrawRot(g_spsh_wave_btns, 30, 30, 0x00, g_orientation);
+			//SDL_SetRenderDrawColor(g_renderer, 0xFF, 0x40, 0x20, 0xFF);
+			//SDL_RenderDrawRect(g_renderer, &(struct SDL_Rect){
+			//	30, 30, 16, 16,
+			//});
+			//Sprite_DrawRot(g_spsh_wave_btns, 30, 30, 0x00, g_orientation);
 
 			//Text_Draw("Hello, \x27\x01\x20\x40\xFFworld\x27\x00!", 21, 10, 10);
 
-			Button_DrawAll();
-			Synth_DrawOscilloscopes(g_synth, g_renderer);
+			//Button_DrawAll();
+			//Synth_DrawOscilloscopes(g_synth, g_renderer);
 			SDL_RenderPresent(g_renderer);
 		}
 
@@ -250,8 +250,7 @@ int main(int argc, char* args[]) {
 	Music_Term();
 	Button_Term();
 	Sprite_Term();
-	SDL_DestroyRenderer(g_renderer);
-	SDL_DestroyWindow(g_window);
+	Screen_Term();
 	SDL_Quit();
 	return 0;
 }

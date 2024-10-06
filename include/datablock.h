@@ -7,6 +7,29 @@
 //		quite easy to parse and can be used to read/write
 //		data to/from files or over a network interface in a
 //		custom format without as much hassle of parsing.
+//		
+//		The Block format is a simple header that includes
+//		the length of the included data and a type/id nr.
+//		All multi-byte fields are big-endian
+//		The data is sandwiched between two 4-byte sections;
+//		at the top, is a header consisting of the 16-bit
+//		block type/id, and a 16-bit length indicator, at
+//		the end of the block is a 32-bit checksum of the
+//		data. This is an example of a valid datablock:
+//			
+//			0x	12 34	--> Block type is 0x1234
+//			0x	00 08	--> Block contains 8 bytes
+//			0x	54 65 73 74 69 6E 67 00	--> Data (ASCII for "Testing" with null terminator)
+//			0x	E5 CA ED 9C	--> Checksum
+//			
+//		A block must be at minimum 8 bytes long, even if
+//		it contains no data. This is a valid block:
+//			
+//			0x	12 34 00 00 FF FF 55 55
+//			
+//		In future, it may be allowed to leave off the checksum
+//		of an empty block, but it must be present to be compatible
+//		with this version of the standard.
 //	
 
 #include <stdbool.h>
@@ -23,7 +46,7 @@
 #define DATABLOCK_NULL_TYPE 0xFFFF
 
 // Internal Data-Block Types
-#define DATABLOCK_ITYPE_FILE_HEADER 0x8000	// Denotes a block that acts as a datablock-file header
+#define DATABLOCK_ITYPE_FILE_HEADER 0xFFFF	// Denotes a block that acts as a datablock-file header
 
 
 //	
@@ -67,6 +90,8 @@ typedef struct {
 //	
 //	`type` may be any 15-bit number with the MSB cleared.
 //	block-types with bit 15 set are reserved for internal use.
+//	i.e.:	0x0000 - 0x7FFF: Available
+//			0x8000 - 0xFFFF: Reserved; Shouldn't be used
 Datablock *Datablock_Create(Uint16 type, void *data, size_t data_len);
 
 //	Destroys a datablock
