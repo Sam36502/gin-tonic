@@ -3,11 +3,6 @@
 
 
 Datablock *Datablock_Create(Uint16 type, void *data, size_t data_len) {
-	if (data == NULL) {
-		Log_Message(LOG_ERROR, "Tried to create data-block from NULL data");
-		return NULL;
-	}
-
 	if (data_len > UINT16_MAX) {
 		data_len = UINT16_MAX;
 		Log_Message(LOG_WARNING, "Tried to create a data-block larger than `UINT16_MAX`. Data will be truncated!");
@@ -17,7 +12,11 @@ Datablock *Datablock_Create(Uint16 type, void *data, size_t data_len) {
 	db->block_type = type;
 	db->block_length = data_len;
 	db->data = SDL_malloc(sizeof(Uint8) * data_len);
-	SDL_memcpy(db->data, data, data_len);
+	if (data != NULL) {
+		SDL_memcpy(db->data, data, data_len);
+	} else {
+		for (int i=0; i<data_len; i++) db->data[i] = 0x00;
+	}
 
 	Datablock_CalcSum(db);
 	return db;
@@ -39,7 +38,7 @@ bool Datablock_IsValid(Datablock *db) {
 
 void Datablock_Print(Datablock *db) {
 	if (db == NULL) {
-		printf("  Datablock is NULL!");
+		printf("  Datablock is NULL!\n");
 		return;
 	}
 
@@ -49,12 +48,13 @@ void Datablock_Print(Datablock *db) {
 	printf("      Data:");
 	for (int i=0; i<db->block_length; i++) {
 		if (i % 16 == 0) printf("\n  0x");
-		printf("  %02X", db->data[i]);
+		printf(" %02X", db->data[i]);
 		if (db->block_length > 8*16 && i > 4*16) {
 			i = db->block_length - 4*16;
 			printf("            ...\n");
 		}
 	}
+	putchar('\n');
 }
 
 
@@ -64,7 +64,7 @@ Datablock_File *Datablock_File_Open(char *filename) {
 	dbf->filename = Util_FS_GetValidPath(filename);
 
 	// Check Magic Bytes
-	FILE *f = Util_FS_Open(filename, "rb");
+	FILE *f = fopen(dbf->filename, "rb");
 	char errmsg[256];
 	if (f == NULL) {
 		SDL_snprintf(errmsg, 256, "Failed to open Data-Block File '%s': Couldn't access file", filename);
@@ -194,7 +194,7 @@ Uint16 Datablock_File_GetAllBlocks(Datablock_File *dbf, Datablock **block_array)
 Datablock *Datablock_File_GetBlock(Datablock_File *dbf, Uint16 block_index) {
 	if (dbf == NULL || block_index >= dbf->num_blocks) return NULL;
 
-	FILE *f = Util_FS_Open(dbf->filename, "rb");
+	FILE *f = fopen(dbf->filename, "rb");
 	char errmsg[256];
 	if (f == NULL) {
 		SDL_snprintf(errmsg, 256, "Failed to open Data-Block File '%s'", dbf->filename);
@@ -214,6 +214,7 @@ Datablock *Datablock_File_GetBlock(Datablock_File *dbf, Uint16 block_index) {
 }
 
 Datablock *Datablock_File_FindFirstOfType(Datablock_File *dbf, Uint16 block_type) {
+	if (dbf == NULL) return NULL;
 
 	// Find index
 	Uint16 index = 0;
@@ -234,15 +235,124 @@ Datablock *Datablock_File_FindFirstOfType(Datablock_File *dbf, Uint16 block_type
 	return Datablock_File_GetBlock(dbf, index);
 }
 
+Datablock *Datablock_File_FindNthOfType(Datablock_File *dbf, Uint16 block_type, int num) {
+	if (dbf == NULL) return NULL;
+
+	// Find index
+	Uint16 index = 0;
+	int curr_num = 0;
+	bool found = false;
+	for (index=0; index<dbf->num_blocks; index++) {
+		if (dbf->index[index].block_type == block_type) {
+			if (curr_num == num) {
+				found = true;
+				break;
+			}
+			
+			curr_num++;
+		}
+	}
+	if (!found) {
+		char errmsg[256];
+		SDL_snprintf(errmsg, 256, "Block with type 0x%04X, num. %i not found in data-block file '%s'", block_type, num, dbf->filename);
+		Log_Message(LOG_ERROR, errmsg);
+		return NULL;
+	}
+
+	return Datablock_File_GetBlock(dbf, index);
+}
+
+int Datablock_File_AppendBlock(Datablock_File *dbf, Datablock *db) {
+	if (dbf == NULL || db == NULL) return -1;
+
+	FILE *f = fopen(dbf->filename, "r+b");
+	char errmsg[256];
+	if (f == NULL) {
+		SDL_snprintf(errmsg, 256, "Failed to open Data-Block File for appending '%s': Couldn't access file", dbf->filename);
+		Log_Message(LOG_ERROR, errmsg);
+		return -1;
+	}
+	fseek(f, 0, SEEK_END);
+
+	// Append datablock
+	int new_index = dbf->num_blocks;
+	dbf->num_blocks++;
+	dbf->index = SDL_realloc(dbf->index, sizeof(Datablock) * dbf->num_blocks);
+	dbf->index[new_index].block_type = db->block_type;
+	dbf->index[new_index].file_offset = ftell(f);
+	if (Datablock_WriteToStream(f, db)) {
+		fclose(f);
+		return new_index;
+	}
+
+	fclose(f);
+	return -1;
+}
+
+int Datablock_File_UpdateBlock(Datablock_File *dbf, Uint16 block_index, void *data, size_t size, size_t offset) {
+	if (dbf == NULL) return -3;
+	if (size == 0) return 0;
+
+	Datablock *db = Datablock_File_GetBlock(dbf, block_index);
+	if (offset + size > db->block_length) {
+		char msg[256];
+		SDL_snprintf(msg, 256,
+			"Tried to update Block %i of '%s'; Provided buffer/offset is invalid (too big: %i + %iB > %iB)",
+			block_index, dbf->filename, (int) offset, (int) size, (int) db->block_length
+		);
+		Log_Message(LOG_ERROR, msg);
+		Datablock_Destroy(db);
+		return -2;
+	}
+
+	// Update Datablock
+	if (data != NULL) {
+		SDL_memcpy(db->data + offset, data, size);
+	} else {
+		for (size_t i=0; i<size; i++) db->data[i + offset] = 0x00;
+	}
+
+	Datablock_CalcSum(db);
+	Uint8 chk[4] = {
+		(db->checksum >> (3 * 8)) & 0xFF,
+		(db->checksum >> (2 * 8)) & 0xFF,
+		(db->checksum >> (1 * 8)) & 0xFF,
+		(db->checksum >> (0 * 8)) & 0xFF,
+	};
+
+	// Write updated datablock to file
+	FILE *f = fopen(dbf->filename, "r+b");
+	if (f == NULL) {
+		char msg[256];
+		SDL_snprintf(msg, 256,
+			"Tried to update Block %i of '%s'; Failed to open with write permission",
+			block_index, dbf->filename
+		);
+
+		Datablock_Destroy(db);
+		return -3;
+	}
+
+	long data_pos = dbf->index[block_index].file_offset;
+	fseek(f, data_pos + sizeof(Uint32), SEEK_SET);
+	fwrite(db->data, sizeof(Uint8), db->block_length, f);
+	fwrite(chk, sizeof(Uint8), 4, f);
+	fflush(f);
+	fclose(f);
+
+	Datablock_Destroy(db);
+	return 0;
+}
+
 Datablock_File *Datablock_File_Create(char *filename, Datablock **blocks, Uint16 num_blocks) {
 	Datablock_File *dbf = SDL_malloc(sizeof(Datablock_File));
-	
+
 	dbf->filename = Util_FS_GetValidPath(filename);
 	dbf->index = SDL_malloc(sizeof(Datablock_IndexEntry) * num_blocks);
 	dbf->num_blocks = num_blocks;
 
 	// Write Magic Bytes
-	FILE *f = Util_FS_Open(filename, "wb");
+	FILE *f = fopen(dbf->filename, "wb");
 	char errmsg[256];
 	if (f == NULL) {
 		SDL_snprintf(errmsg, 256, "Failed to open Data-Block File for writing '%s': Couldn't access file", filename);

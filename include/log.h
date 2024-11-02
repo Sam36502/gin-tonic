@@ -7,6 +7,9 @@
 //	
 //		(Hierarchy-Level: Bottom)
 //	
+//	To-Do:
+//	 - Add output file option/override stream to write to
+//	 - Add internal error buffer, that Gin-Tonic can write to; lets users choose what errors to log
 
 #include <stdio.h>
 #include <string.h>

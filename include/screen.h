@@ -6,6 +6,8 @@
 //		Handles creating and drawing to the screen/window.
 //		Also includes global references to the window/renderer.
 //	
+//	To Do:
+//	 - Make it so that the window can't be resized smaller than the specified logical size
 
 #include <SDL2/SDL.h>
 #include "log.h"

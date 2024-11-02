@@ -2,7 +2,7 @@
 #	Gin-Tonic Makefile
 #
 
-VERSION = 0.1.0
+VERSION = 0.1.2
 BIN = GinTonic
 
 CC = gcc
@@ -30,19 +30,23 @@ list:
 test: build
 	@echo -e '\n### Building & Running Test ###\n'
 	-rm -f $(TST)/main.o $(TST)/test.exe
-	${CC} ${CFLAGS} -o $(TST)/main.o -c $(TST)/main.c -L./ -lGinTonic $(addprefix -l,$(LIBS))
-	${CC} ${CFLAGS} -o $(TST)/test.exe $(TST)/main.o -L./ -lGinTonic $(addprefix -l,$(LIBS))
+#	${CC} ${CFLAGS} -o $(TST)/main.o -c $(TST)/main.c -L./ -lGinTonic $(addprefix -l,$(LIBS))
+	${CC} ${CFLAGS} -o $(TST)/test.exe $(TST)/main.c -L./ -lGinTonic $(addprefix -l,$(LIBS))
 
 build: $(OBJS)
 	@echo -e '\n### Linking... ###'
 	${CC} ${LFLAGS} -o ${BIN}.dll $(OBJS) $(addprefix -l,$(LIBS))
 
 release: 
-	@echo -e '### Creating Release... ###\n'
+	@echo -e '\n### Creating Release... ###\n'
 	${CC} ${REL_CFLAGS} -o ${BIN}_v${VERSION}.dll $(OBJS) $(addprefix -l,${LIBS})
 
+static: build
+	@echo -e '\n### Creating Static Library... ###\n'
+	ar rcs lib${BIN}.a $(OBJS)
+
 clean:
-	@echo -e '### Cleaning... ###\n'
+	@echo -e '\n### Cleaning... ###\n'
 	-rm -f $(BIN).dll
 	-rm -rf $(OBJ)
 	@mkdir -p $(OBJ)
@@ -59,4 +63,4 @@ $(OBJ):
 	#echo -e 'Creating object directory...'
 	@mkdir -p $(OBJ)
 
-.PHONY: test run build release clean
+.PHONY: list test run build release static clean

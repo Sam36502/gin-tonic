@@ -18,6 +18,12 @@ Collection of my own utility code for making games with SDL2
 ## Planned Future Improvements
  - Embed interface: Lets you embed a datablock file and fetch
    data from it easily (`embed.h`)
+ - Extend Datablock features. e.g. Auto chunking larger blocks, built-in compression, etc.
+   Could maybe include extra-large blocks that are just imported files. (useful for assets)
+ - Asset Framework: Extend datablock API to include more access operations and
+   then set up a framework that lets you register assets so they can all be collected in a
+   single large archive DBF. Would include "linking" system to ensure unique IDs while using
+   a human-readable name. Once "compiled" names become simple IDs. (Hash map?)
  - Network interface: Provides basic net utilities for hosting
    and connecting to servers. Maybe also net-event infrastructure
    (`network.h`)

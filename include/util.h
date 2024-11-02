@@ -8,6 +8,9 @@
 //	
 //		(Hierarchy-Level: Bottom)
 //	
+//		To-Do Features:
+//		 - Hue to RGB & Vice-Versa
+//		 - UTF-8 conversion (maybe `Uint32 Util_NextCodepoint(char *str, char *end)` like strtok)
 
 #include <stdio.h>
 #include <stdbool.h>

@@ -7,16 +7,30 @@ int g_cap_keybinds = 0x100;
 
 
 void Binding_Init() {
+	if (g_keybinds != NULL) return;
+
 	g_keybinds = SDL_malloc(sizeof(Binding) * g_cap_keybinds);
 	for (int i=0; i<g_cap_keybinds; i++) {
 		g_keybinds[i].input = INPUT_NONE;
 		g_keybinds[i].keycodes = NULL;
 		g_keybinds[i].num_keycodes = 0;
+		g_keybinds[i].is_held = false;
 	}
+}
+
+void Binding_Term() {
+	if (g_keybinds == NULL) return;
+	for (int i=0; i<g_cap_keybinds; i++) {
+		if (g_keybinds[i].keycodes != NULL) SDL_free(g_keybinds[i].keycodes);
+	}
+	SDL_free(g_keybinds);
+	g_keybinds = NULL;
 }
 
 void Binding_InitFromFile(Datablock_File *dbf, Uint16 bind_dbtp) {
 	if (dbf == NULL) return;
+	if (g_keybinds != NULL) return;
+
 	Binding_Init();
 	for (int dbi=0; dbi<dbf->num_blocks; dbi++) {
 		Datablock *db = Datablock_File_GetBlock(dbf, dbi);
@@ -95,14 +109,6 @@ void Binding_WriteToFile(Datablock_File *dbf, Uint16 bind_dbtp) {
 	Log_Message(LOG_INFO, buf);
 }
 
-void Binding_Term() {
-	if (g_keybinds == NULL) return;
-	for (int i=0; i<g_cap_keybinds; i++) {
-		if (g_keybinds[i].keycodes != NULL) SDL_free(g_keybinds[i].keycodes);
-	}
-	SDL_free(g_keybinds);
-}
-
 void Binding_Add(Input_Type in, SDL_KeyCode kc) {
 	if (in == INPUT_NONE) return;
 
@@ -132,17 +138,49 @@ void Binding_Add(Input_Type in, SDL_KeyCode kc) {
 	bind->keycodes = SDL_realloc(bind->keycodes, sizeof(SDL_KeyCode) * newlen);
 	bind->keycodes[bind->num_keycodes] = kc;
 	bind->num_keycodes = newlen;
+	bind->is_held = false;
 }
 
-Input_Type Binding_ConvKeyCode(SDL_KeyCode kc) {
+int Binding_GetByKeyCode(SDL_KeyCode kc) {
+	if (g_keybinds == NULL) return -1;
+
 	for (int i=0; i<g_num_keybinds; i++) {
 		Binding bind = g_keybinds[i];
 		for (int c=0; c<bind.num_keycodes; c++) {
 			if (bind.keycodes[c] == kc) {
-				return bind.input;
+				return i;
 			}
 		}
 	}
 
-	return INPUT_NONE;
+	return -1;
+}
+
+Input_Type Binding_ConvKeyCode(SDL_KeyCode kc) {
+	int index = Binding_GetByKeyCode(kc);
+	if (index < 0) return INPUT_NONE;
+
+	return g_keybinds[index].input;
+}
+
+void Binding_HandleEvent(SDL_Event event) {
+	if (event.type != SDL_KEYDOWN || event.type != SDL_KEYUP) return;
+
+	SDL_KeyCode kc = event.key.keysym.sym;
+	int index = Binding_GetByKeyCode(kc);
+	if (index < 0) return;
+
+	g_keybinds[index].is_held = (event.key.state == SDL_PRESSED);
+}
+
+bool Binding_IsHeld(Input_Type in) {
+	if (in == INPUT_NONE) return false;
+	if (g_keybinds == NULL) return false;
+
+	for (int i=0; i<g_num_keybinds; i++) {
+		Binding bind = g_keybinds[i];
+		if (bind.input == in) return bind.is_held;
+	}
+
+	return false;
 }

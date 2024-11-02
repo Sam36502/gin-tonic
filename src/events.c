@@ -5,6 +5,7 @@
 //	
 
 static SDL_EventType __uevent_type_clock;
+static SDL_EventType __uevent_type_network;
 
 
 //	
@@ -37,6 +38,7 @@ void Events_Init(Uint32 ms_per_tick) {
 
 	// Register User Events
 	__uevent_type_clock = SDL_RegisterEvents(1);
+	__uevent_type_network = SDL_RegisterEvents(1);
 
 	// Start System Clock
 	SDL_AddTimer(ms_per_tick, __cb_clock, NULL);

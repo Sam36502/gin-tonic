@@ -27,10 +27,9 @@
 //			
 //			0x	12 34 00 00 FF FF 55 55
 //			
-//		In future, it may be allowed to leave off the checksum
-//		of an empty block, but it must be present to be compatible
-//		with this version of the standard.
-//	
+
+//		To-Do List / Future Features:
+//		 - Create Arena/Stack allocator for datablocks in a file (could work like a cache as well?)
 
 #include <stdbool.h>
 #include <SDL2/SDL.h>
@@ -87,6 +86,9 @@ typedef struct {
 //	`data` may be up to a maximum of `UINT16_MAX` bytes,
 //	if `data_len` is greater than `UINT16_MAX`, the function
 //	will log a warning and truncate the data.
+//	
+//	`data` may also be NULL, in which case an empty block
+//	of `data_len` 0x00 bytes will be created.
 //	
 //	`type` may be any 15-bit number with the MSB cleared.
 //	block-types with bit 15 set are reserved for internal use.
@@ -161,11 +163,53 @@ Uint16 Datablock_File_GetAllBlocks(Datablock_File *dbf, Datablock **block_array)
 //	so it should be `Datablock_Destroy()`-ed when you're finished with it.
 Datablock *Datablock_File_GetBlock(Datablock_File *dbf, Uint16 block_index);
 
-//	Retrieves a whole data block from a datablock file by its type
+//	Retrieves a whole data block from a datablock file by its ID (type)
 //	
 //	Searches the index for the first block that matches the given type
 //	and returns a pointer to that block
 Datablock *Datablock_File_FindFirstOfType(Datablock_File *dbf, Uint16 block_type);
+
+//	Retrieves a whole data block from a datablock file by its type and number
+//	
+//	Searches the index for the `num`-th block that matches the given type
+//	and returns a pointer to that block. E.g.:
+//	
+//		Your file has blocks A (0x0001), B (0x0002), C (0x0001);
+//		You call this function with `block_type` = 0x0001 and `num` = 1;
+//		It returns a copy of block C
+Datablock *Datablock_File_FindNthOfType(Datablock_File *dbf, Uint16 block_type, int num);
+
+//	Appends a new datablock to the end of a file
+//	
+//	Returns the index of the new block or -1 if it failed
+int Datablock_File_AppendBlock(Datablock_File *dbf, Datablock *db);
+
+//	Updates the data of a block in a file
+//	
+//	Looks for the datablock in the file at the given `block_index` and
+//	replaces a portion of the data bytes with the given data.
+//	
+//	It cannot create any new blocks or extend existing ones,
+//	it only overwrites existing blocks with the same amount of data!
+//	If `size` is smaller than the datablock,
+//	the remaining bytes will be unaffected in the file
+//	Additionally, you can set which part of the block to overwrite with `offset`.
+//	Also, if `data` is NULL, the selected space will be overwritten with zeroes.
+//	
+//	Example:
+//		Before:	0x00 0x01 0x02 0x03
+//			
+//		Then update with data={ 0xFF }, len=1, offset=0:
+//				0xFF 0x01 0x02 0x03
+//			
+//		Then update with data={ 0xAB, 0xCD }, len=2, offset=1:
+//				0xFF 0xAB 0xCD 0x03
+//	
+//	Returns 0 on successful write,
+//	Returns -1 if the block couldn't be found
+//	Returns -2 if `size` is larger than the datablock
+//	Returns -3 if the file can't be overwritten (or is NULL)
+int Datablock_File_UpdateBlock(Datablock_File *dbf, Uint16 block_index, void *data, size_t size, size_t offset);
 
 //	Stores an array of Datablocks to a file
 //	
