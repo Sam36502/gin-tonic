@@ -132,7 +132,31 @@ void Datablock_File_Close(Datablock_File *dbf) {
 	SDL_free(dbf);
 }
 
+Datablock *Datablock_ParseFromBytes(void *data, size_t size) {
+	if (data == NULL || size < 8) return NULL;
+	Uint8 *cd = (Uint8 *) data;
+
+	Uint16 type, len;
+	U8_TO_U16(type, cd[0], cd[1]);
+	U8_TO_U16(len, cd[2], cd[3]);
+	cd += 4;
+
+	if (len > size - 8) return NULL;
+
+	Datablock *db = Datablock_Create(type, cd, len);
+	cd += len;
+
+	db->checksum = 0;
+	db->checksum |= (Uint32)(*cd) << 24; cd++;
+	db->checksum |= (Uint32)(*cd) << 16; cd++;
+	db->checksum |= (Uint32)(*cd) <<  8; cd++;
+	db->checksum |= (Uint32)(*cd) <<  0; cd++;
+
+	return db;
+}
+
 Datablock *Datablock_ParseFromStream(FILE *f) {
+	if (f == NULL) return NULL;
 	Datablock *db = SDL_malloc(sizeof(Datablock));
 
 	// Read Header
@@ -156,7 +180,28 @@ Datablock *Datablock_ParseFromStream(FILE *f) {
 	return db;
 }
 
+int Datablock_WriteToBytes(void *data, size_t size, Datablock *db) {
+	if (data == NULL || data == NULL || size < db->block_length + 8) return -1;
+
+	Uint8 *cd = data;
+	*cd = (db->block_type >> 8); cd++;
+	*cd = (db->block_type & 0xFF); cd++;
+	*cd = (db->block_length >> 8); cd++;
+	*cd = (db->block_length & 0xFF); cd++;
+
+	SDL_memcpy(cd, db->data, db->block_length);
+	cd += db->block_length;
+
+	*cd = (db->checksum >> 24) & 0xFF; cd++;
+	*cd = (db->checksum >> 16) & 0xFF; cd++;
+	*cd = (db->checksum >>  8) & 0xFF; cd++;
+	*cd = (db->checksum >>  0) & 0xFF; cd++;
+
+	return 4 + db->block_length + 4;
+}
+
 bool Datablock_WriteToStream(FILE *f, Datablock *db) {
+	if (f == NULL || db == NULL) return false;
 	
 	// Write Head
 	Uint8 block_head[4];

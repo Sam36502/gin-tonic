@@ -132,12 +132,24 @@ Datablock_File *Datablock_File_Open(char *filename);
 //	data from/to the file.
 void Datablock_File_Close(Datablock_File *dbf);
 
+//	Takes block of data and parses a datablock from it
+//	
+//	Returns NULL on error.
+//	Otherwise newly allocated datablock with copied data
+Datablock *Datablock_ParseFromBytes(void *data, size_t size);
+
 //	Parses a data-block from a `FILE *`
 //	
 //	Mainly for internal use.
 //	This function assumes `f` is a pointer to a datablock file
 //	that has been `fseek()`-ed to beginning of a data block.
 Datablock *Datablock_ParseFromStream(FILE *f);
+
+//	Takes datablock and serialises it into its file format
+//	
+//	Returns number of bytes written or -1 on error
+//	Otherwise newly allocated datablock with copied data
+int Datablock_WriteToBytes(void *data, size_t size, Datablock *db);
 
 //	Writes a datablock to a `FILE *`
 //	

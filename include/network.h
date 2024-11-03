@@ -1,86 +1,150 @@
-//#ifndef GT_NETWORK_H
-//#define GT_NETWORK_H
-////	
-////				Network Utilities
-////	
-////		Handles creating and connecting to servers with TCP/IP.
-////		Also includes basic IP utils.
-////	
-//
-//#include <stdio.h>
-//#include <SDL2/SDL_net.h>
-//#include <SDL2/SDL_thread.h>
-//
-//#define NET_DEFAULT_SOCKET_TIMEOUT 100
-//#define NET_DEFAULT_MAX_CONNECTIONS 256
-//
-//// Netblock Type-Bytes
-//#define NETBLOCK_ACK		0x00
-//#define NETBLOCK_PING		0x01
-//#define NETBLOCK_ENT_ADD	0x10
-//#define NETBLOCK_ENT_UPDATE	0x11
-//#define NETBLOCK_ENT_REMOVE	0x1F
-//#define NETBLOCK_INFOMSG	0xFE
-//#define NETBLOCK_TERMINATE	0xFF
-//
-//#define NULL_IP (IPaddress){0,0}
-//#define PASS_DATA_THROUGH() \
-//				conn->last_data = data-4; \
-//				conn->last_data_len = block_len+4; \
-//				SDL_CondSignal(conn->cond_passthrough); \
-//
-//typedef struct {
-//	IPaddress ip;
-//	TCPsocket sock;
-//	SDL_mutex *mutex;
-//	SDL_cond *cond_passthrough;
-//	SDL_Thread *thread;
-//	Uint8 *last_data;
-//	int last_data_len;
-//	bool thread_running;
-//} Connection;
-//
-//typedef Uint16 Network_Entity_ID;
-//
-//typedef enum {
-//	NETENTITY_WORM
-//} Network_Entity_Type;
-//
-//typedef struct {
-//	Network_Entity_Type type;
-//	Network_Entity_ID id; // Net-id for server-side entities
-//	void *entity;
-//	size_t entity_size;
-//} Network_Entity;
-//
-//
-//extern IPaddress g_localhost;
-//extern Connection *g_server_connection;
-//extern char *g_server_name;
-//extern Network_Entity g_net_entity_list[MAX_NET_ENTITIES];
-//extern int g_net_entity_count;
-////extern SDL_mutex *g_server_mutex;
-////extern SDL_Thread *g_server_thread;
-//
-//
-//void Net_Init();
-//void Net_Term();
-//void Net_FormatIP(char *buf, size_t len, IPaddress ip);
-//void Net_Log(char *msg, IPaddress ip);
-//void Net_StartServer(char *name, Uint16 capacity);
-//void Net_StopServer();
-//
-//bool Net_PingServer(IPaddress ip, Uint16 *players, Uint16 *capacity, char *name, size_t name_len); // Pass NULL to any param you don't need
-//Connection *Net_ConnectToServer(IPaddress ip);
-//void Net_RegisterEntityOnServer(Connection *conn, Network_Entity_Type entity_type, Uint8 *entity_data, size_t entity_size);
-//void Net_UpdateEntityOnServer(Connection *conn, Network_Entity *ent);
-//void Net_RemoveEntityOnServer(Connection *conn, Network_Entity *ent);
-//void Net_Disconnect(Connection *conn);
-//void Net_SendInfoMessage(Connection *conn, char *str, size_t len);
-//
-//void NetEntity_Register(Network_Entity *ent);
-//void NetEntity_Remove(Network_Entity_ID ent_id);
-//void Net_LogEntities();
-//void Net_GetClientData(Connection *conn, Uint8 **data, int *len);
-//
-//#endif
+#ifndef GT_NETWORK_H
+#define GT_NETWORK_H
+//	
+//				Network Utilities
+//	
+//		Handles creating and connecting to servers with TCP/IP.
+//		Also includes basic IP utils.
+//	
+//	To-Do:
+//		- Separate StartServer into Create & Start (Destroy & Stop) ?
+//		- Get Datablock parsing to correctly handle partial blocks (que-buffer; periodically for valid full blocks?)
+
+#include <SDL2/SDL_net.h>
+#include <SDL2/SDL_thread.h>
+
+#include "../include/events.h"
+#include "../include/datablock.h"
+
+
+//	
+//		Constant Definitions
+//	
+
+#define NET_SOCKET_TIMEOUT 0
+#define NET_THREAD_NAME_SERVER "gt_thread_srv"
+#define NET_THREAD_NAME_CONNECTION "gt_thread_conn"
+#define NET_BUFFER_SIZE 0x400
+
+#define NULL_IP (IPaddress){0,0}
+
+#define UEVENT_NET_RECEIVE		0x80
+#define UEVENT_NET_CONNECT		0x81
+#define UEVENT_NET_DISCONNECT	0x82
+
+
+//	
+//		Type Definitions
+//	
+
+typedef enum {
+	NET_STATE_INIT,	// Starting / Connecting (transition)
+	NET_STATE_GOOD,	// Server / Connection established and running
+	NET_STATE_TERM,	// Stopping / Disconnecting (transition)
+	NET_STATE_OFFL,	// Stopped / Closed (Offline)
+} Net_State;
+
+typedef struct {
+	IPaddress ip;
+	TCPsocket sock;
+	SDL_mutex *mutex;
+	SDL_Thread *thread;
+	Net_State state;
+} Net_Conn;
+
+typedef struct {
+	IPaddress ip;
+	Uint16 capacity;
+	Uint16 client_count;
+	TCPsocket sock;
+	SDLNet_SocketSet socketset;
+	TCPsocket *client_socks;
+	SDL_mutex *mutex;
+	SDL_Thread *thread;
+	Net_State state;
+} Net_Server;
+
+
+//	
+//		Function Declarations
+//	
+
+//	Initialise Networking Features
+//	
+//	Registers new user-events for network events:
+//	 - UEVENT_NET_RECEIVE: Data was received from an active connection; data1 = TCPsocket socket; data2 = Datablock *packet_data
+//	 - UEVENT_NET_CONNECT: A connection was successfully established; data1 = TCPsocket socket; data2 = NULL
+//	 - UEVENT_NET_DISCONNECT: A connection was terminated; data1 = IPaddress *addr; data2 = NULL
+void Net_Init();
+
+//	Terminate Networking System
+//	
+void Net_Term();
+
+//	Format an IP-address into a human-readable string
+//	
+//	Returned pointer should not be freed; it is allocated internally.
+//	If you need the resulting string between calls, you must copy it
+char *Net_FormatIP(IPaddress ip);
+
+//	Wraps Log_Message to include SDL_net error info
+//	
+void Net_Log_Message(Log_Level lvl, char *msg);
+
+//	Sends a data-block over a TCP-Socket
+//	
+void Net_SendBlock(TCPsocket sock, Datablock *data);
+
+
+//// Server Functions ////
+
+//	Starts a server on the given port
+//	
+//	Capacity defines how many simultaneous connections the server can handle
+//	Returns NULL on failure
+Net_Server *Net_Server_Start(Uint16 port, Uint16 capacity);
+
+//	Stops a server that was previously running
+//	
+void Net_Server_Stop(Net_Server *srv);
+
+//	Gets the client-index of a client's TCP-Socket
+//	
+//	NOTE: The index is NOT an ID!
+//	If a client disconnects, the others' IDs may be rearranged!
+//	
+//	Returns client index or -1 if the arguments are invalid,
+//	or if that socket couldn't be found on the server
+int Net_Server_GetClientIndex(Net_Server *srv, TCPsocket client_sock);
+
+//	Disconnects a client from the server
+//	
+//	if `client_index` is <0, this disconnects all clients
+void Net_Server_DisconnectClient(Net_Server *srv, int client_index);
+
+//	Sends a data-block to a client of the given server
+//	
+//	Does nothing if `client_index` is invalid
+//	Broadcast to all connected clients if `client_index` < 0
+//	
+//	(Wrapper for `Net_SendBlock()`)
+void Net_Server_Send(Net_Server *srv, int client_index, Datablock *data);
+
+
+//// Client Functions ////
+
+//	Opens a connection to a server
+//	
+//	Returns NULL if the connection fails
+Net_Conn *Net_Connect(IPaddress ip);
+
+//	Disconnects from a server
+//	
+void Net_Disconnect(Net_Conn *conn);
+
+//	Sends a data-block to the server over a Connection
+//	
+//	(Wrapper for `Net_SendBlock()`)
+void Net_Conn_Send(Net_Conn *conn, Datablock *data);
+
+#endif

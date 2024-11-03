@@ -4,8 +4,7 @@
 //		Global Variable Definitions
 //	
 
-static SDL_EventType __uevent_type_clock;
-static SDL_EventType __uevent_type_network;
+static SDL_EventType __gt_uevent_type;
 
 
 //	
@@ -18,7 +17,7 @@ static SDL_EventType __uevent_type_network;
 //	and just serves to push the clock event
 static Uint32 __cb_clock(Uint32 interval, void *param) {
 	SDL_UserEvent event = {
-		.type = __uevent_type_clock,
+		.type = __gt_uevent_type,
 		.code = UEVENT_CLOCK_TICK,
 	};
 	SDL_PushEvent((SDL_Event *) &event);
@@ -37,8 +36,7 @@ void Events_Init(Uint32 ms_per_tick) {
 	};
 
 	// Register User Events
-	__uevent_type_clock = SDL_RegisterEvents(1);
-	__uevent_type_network = SDL_RegisterEvents(1);
+	__gt_uevent_type = SDL_RegisterEvents(1);
 
 	// Start System Clock
 	SDL_AddTimer(ms_per_tick, __cb_clock, NULL);
@@ -60,4 +58,14 @@ void Events_HandleInternal(SDL_Event event) {
 		} break;
 		
 	}
+}
+
+void Events_GTEvent_Push(Sint32 code, void *data1, void *data2) {
+	SDL_UserEvent event = {
+		.type = __gt_uevent_type,
+		.code = code,
+		.data1 = data1,
+		.data2 = data2,
+	};
+	SDL_PushEvent((SDL_Event *) &event);
 }

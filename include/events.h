@@ -7,6 +7,8 @@
 //	
 //		(Hierarchy-Level: Mid)
 //	
+//	To-Do:
+//	 - Add input binding-events (bypass having to catch them manually)
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -23,7 +25,7 @@
 //	
 
 // This event is sent for each clock tick
-#define UEVENT_CLOCK_TICK 0x00
+#define UEVENT_CLOCK_TICK		0x00
 
 //	
 //		Function Declarations
@@ -41,5 +43,11 @@ void Events_Init(Uint32 ms_per_tick);
 //	received events yourself if you use any of GinTonic's
 //	input utilities (<button.h>)
 void Events_HandleInternal(SDL_Event event);
+
+//	Pushes a gin-tonic event to the event queue
+//	
+//	Automatically sets the event's `type`
+//	(Mainly used internally)
+void Events_GTEvent_Push(Sint32 code, void *data1, void *data2);
 
 #endif
