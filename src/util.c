@@ -83,3 +83,41 @@ FILE *Util_FS_Open(char *filename, char *mode) {
 
 	return file;
 }
+
+char *Util_Format_SizeT(size_t num, int int_prec, int dec_prec, int total_len) {
+	static char str[256];
+
+	double size = num;
+	int mag = 0;
+	while (size >= 1024.0L && mag < 8) {
+		size /= 1024.0L;
+		mag++;
+	}
+
+	int curr_len;
+	if (int_prec < 0)
+		curr_len = SDL_snprintf(str, 256, "%.*f ", dec_prec, size);
+	else
+		curr_len = SDL_snprintf(str, 256, "%0*.*f ", int_prec+1+dec_prec, dec_prec, size);
+
+	char *unit = "";
+	switch (mag) {
+		case 0: unit = "B"; break;
+		case 1: unit = "KiB"; break;
+		case 2: unit = "MiB"; break;
+		case 3: unit = "GiB"; break;
+		case 4: unit = "TiB"; break;
+		case 5: unit = "PiB"; break;
+		case 6: unit = "EiB"; break;
+		case 7: unit = "ZiB"; break;
+		default: unit = "YiB"; break;
+	}
+
+	if (total_len < 0 || total_len < curr_len) {
+		SDL_snprintf(str, 256, "%s%s", str, unit);
+	} else {
+		SDL_snprintf(str, 256, "%s%-*s", str, total_len - curr_len, unit);
+	}
+
+	return str;
+}

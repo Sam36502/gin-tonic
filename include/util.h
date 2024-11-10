@@ -74,4 +74,23 @@ char *Util_FS_GetValidPath(char *path);
 //	if the file exists in the bin directory.
 FILE *Util_FS_Open(char *filename, char *mode);
 
+//	Formats a `size_t` in the most "human-readable" format
+//	
+//	Returns a static buffer (DON'T FREE!)
+//	
+//	Format Example:
+//	```
+//			259 (Bytes)	--> "259 B"
+//			48230 		--> "47.09 KiB"
+//			5729850365	--> "5.33 GiB"
+//	```
+//	
+//	The final 3 arguments are for formatting options
+//	 - `int_prec` sets the number of digits to use before the decimal point (-1 for no fixed len)
+//	 - `dec_prec` sets the number of digits to use after the decimal point (-1 for no fixed len)
+//	 - `total_len` sets the width of the whole string; But the unit indicator is always fully right
+//	   e.g.: total_len = 10 --> "`3.65   MiB`"
+//	   If this is smaller than the length of string (with 1 space before unit), it is ignored
+char *Util_Format_SizeT(size_t num, int int_prec, int dec_prec, int total_len);
+
 #endif

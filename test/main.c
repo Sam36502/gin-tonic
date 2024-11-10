@@ -15,6 +15,7 @@
 #include "../include/button.h"
 #include "../include/datablock.h"
 #include "../include/binding.h"
+#include "../include/arena.h"
 
 #include "menu_scene.c"
 #include "test_scene.c"
@@ -58,7 +59,7 @@ int main(int argc, char* args[]) {
 	SDL_free(basename);
 	SDL_free(sdlbase);
 	fflush(stdout);
-
+	
 	Screen_Init("GinTonic Test Program", 128, 128);
 	Sprite_Init();
 	//Text_Init("../assets/text_sprites.png");
